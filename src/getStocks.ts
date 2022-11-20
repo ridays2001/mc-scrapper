@@ -16,7 +16,7 @@ interface Stock {
 
 async function getStocks(page: Page, type: StockType = 'NIFTY-500'): Promise<Array<Stock>> {
 	const link = pageLinks[type];
-	await page.goto(link, { waitUntil: 'domcontentloaded' });
+	await page.goto(link, { waitUntil: 'networkidle2' });
 
 	const stocks = await page.$$eval('#indicesTableData table tbody tr', stocks => {
 		return stocks.map(s => ({
@@ -27,9 +27,10 @@ async function getStocks(page: Page, type: StockType = 'NIFTY-500'): Promise<Arr
 	});
 
 	if (!stocks[0].price) {
-		console.log('Something went wrong. Retrying...');
+		console.log('❌ Something went wrong. Retrying...');
 		return getStocks(page, type);
 	}
+	console.log('✅ Got the list of all stocks. Fetching them one by one now...');
 
 	return stocks as Array<Stock>;
 }
