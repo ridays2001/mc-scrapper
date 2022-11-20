@@ -1,8 +1,8 @@
-import pptr from 'puppeteer-core';
 import { writeFile } from 'fs/promises';
 import getIncome from './getIncome';
 import getROCE from './getROCE';
 import getStocks from './getStocks';
+import getPage from './getPage';
 
 interface Details {
 	name: string;
@@ -13,16 +13,9 @@ interface Details {
 
 const time = (t2: number, t1: number) => `${Math.round((t2 - t1) / 1000)}s`;
 
-const disabledResources = ['image', 'imageset', 'media', 'object', 'stylesheet'];
 (async function () {
 	const start = Date.now();
-	const browser = await pptr.launch({ channel: 'chrome' });
-	const page = await browser.newPage();
-	await page.setRequestInterception(true);
-	page.on('request', req => {
-		if (disabledResources.includes(req.resourceType())) req.abort();
-		else req.continue();
-	});
+	const page = await getPage();
 
 	const stocks = await getStocks(page, 'SML-50');
 	const details = {} as Record<string, Details>;
@@ -41,6 +34,10 @@ const disabledResources = ['image', 'imageset', 'media', 'object', 'stylesheet']
 		const t2 = Date.now();
 		console.log(`✅ (${i + 1}/${stocks.length}) ${stock.name} [Took: ${time(t2, t1)} | Total: ${time(t2, start)}]`);
 	}
-	await browser.close();
+
+	// Close the browser.
+	await page.browser().close();
+
+	// Write the details into a JSON file.
 	await writeFile('details.json', JSON.stringify(details, undefined, 4));
 })();
