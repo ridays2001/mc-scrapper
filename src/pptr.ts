@@ -1,6 +1,12 @@
+/*
+ * References:
+ * https://www.bannerbear.com/blog/ways-to-speed-up-puppeteer-screenshots/ - For puppeteer optimization.
+ * https://advancedweb.hu/how-to-speed-up-puppeteer-scraping-with-parallelization/ - For parallelization guide.
+ */
+
+import type { Browser, Page } from 'puppeteer-core';
 import pptr from 'puppeteer-core';
 
-// Chrome args for faster processing.
 const minimalArgs = [
 	'--autoplay-policy=user-gesture-required',
 	'--disable-background-networking',
@@ -37,20 +43,33 @@ const minimalArgs = [
 	'--password-store=basic',
 	'--use-mock-keychain'
 ];
-const disabledResources = ['image', 'imageset', 'media', 'object', 'stylesheet'];
 const blockedDomains = ['googlesyndication.com', 'adservice.google.com'];
+const disabledResources = ['image', 'imageset', 'media', 'object', 'stylesheet'];
 
-async function getPage() {
+export const withBrowser = async <T>(fn: (browser: Browser) => T) => {
 	const browser = await pptr.launch({ channel: 'chrome', headless: true, args: minimalArgs, userDataDir: './pptr' });
-	const page = await browser.newPage();
-	await page.setRequestInterception(true);
-	page.on('request', req => {
-		if (disabledResources.includes(req.resourceType())) req.abort();
-		else if (blockedDomains.some(domain => req.url().includes(domain))) req.abort();
-		else req.continue();
-	});
 
-	return page;
-}
+	try {
+		return await fn(browser);
+	} finally {
+		await browser.close();
+	}
+};
 
-export default getPage;
+export const withPage =
+	(browser: Browser) =>
+	async <T>(fn: (page: Page) => T) => {
+		const page = await browser.newPage();
+		await page.setRequestInterception(true);
+		page.on('request', req => {
+			if (disabledResources.includes(req.resourceType())) req.abort();
+			else if (blockedDomains.some(domain => req.url().includes(domain))) req.abort();
+			else req.continue();
+		});
+
+		try {
+			return await fn(page);
+		} finally {
+			await page.close();
+		}
+	};
