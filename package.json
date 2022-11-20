@@ -1,0 +1,23 @@
+{
+	"name": "mc-scrapper",
+	"version": "1.0.0",
+	"description": "A scrapper for Money Control.",
+	"main": "dist/index.js",
+	"scripts": {
+		"test": "tsc && node ."
+	},
+	"author": {
+		"name": "Riday ♡",
+		"email": "iam@riday.me",
+		"url": "https://riday.me/"
+	},
+	"license": "MIT",
+	"dependencies": {
+		"puppeteer-core": "^19.2.2",
+		"tslib": "^2.4.1"
+	},
+	"devDependencies": {
+		"@types/node": "^18.11.9",
+		"typescript": "^4.9.3"
+	}
+}
