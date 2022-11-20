@@ -1,6 +1,6 @@
 import type { Page } from 'puppeteer-core';
 
-type StockType = 'NIFTY-500' | 'MID-100' | 'SML-50';
+export type StockType = 'NIFTY-500' | 'MID-100' | 'SML-50';
 
 const pageLinks: Record<StockType, string> = {
 	'NIFTY-500': 'https://www.moneycontrol.com/markets/indian-indices/top-nse-500-companies-list/7',
