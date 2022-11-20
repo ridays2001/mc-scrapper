@@ -1,5 +1,17 @@
+# Node modules.
 node_modules
+
+# Compiled Javascript files.
 dist
+
+# Typescript incremental data.
 .tsbuildinfo
+
+# VS Code config data.
 .vscode
+
+# Scrapped data.
 details*.json
+
+# Puppeteer cache.
+pptr
