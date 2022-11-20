@@ -3,7 +3,7 @@ import type { Page } from 'puppeteer-core';
 async function get5YearData(page: Page) {
 	// The first row of the table has information on all the years.
 	const years = await page.$eval('#new-format table tbody tr:first-child', tr => {
-		const yrs = [] as Array<number | string>;
+		const yrs = [] as Array<number>;
 		for (let i = 1; i <= 5; i++) {
 			const yr = tr.children.item(i)?.textContent as string;
 			if (!yr) break;
@@ -23,9 +23,9 @@ async function get5YearData(page: Page) {
 		return r;
 	});
 
-	const data = {} as Record<number | string, number>;
+	const data = [] as Array<{ year: number; data: number }>;
 	for (let i = 0; i < years.length; i++) {
-		data[years[i]] = roce[i];
+		data.push({ year: years[i], data: roce[i] });
 	}
 
 	return data;
@@ -36,22 +36,15 @@ async function getROCE(page: Page, link: string) {
 	const ratiosLink = await page.$eval('#consolidated li a[title="Ratios"]', el => (el as HTMLAnchorElement).href);
 
 	await page.goto(ratiosLink, { waitUntil: 'domcontentloaded' });
-
-	// Get data of first 5 years.
 	const data1 = await get5YearData(page);
-
 	const ratiosLink2 = await page.$eval('ul.pagination li:last-child a', el => (el as HTMLAnchorElement).href);
 
+	// If there is some issue with the new link, stop here and return the data scrapped so far.
 	if (!ratiosLink2 || !ratiosLink2.startsWith('https://')) return data1;
 
 	await page.goto(ratiosLink2, { waitUntil: 'domcontentloaded' });
-
-	// Get data of next 5 years.
 	const data2 = await get5YearData(page);
-
-	// Merge both into one object.
-	const data = { ...data1, ...data2 };
-	return data;
+	return [...data1, ...data2];
 }
 
 export default getROCE;

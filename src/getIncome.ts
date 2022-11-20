@@ -23,9 +23,9 @@ async function get5YearData(page: Page) {
 		return inc;
 	});
 
-	const data = {} as Record<number, number>;
+	const data = [] as Array<{ year: number; data: number }>;
 	for (let i = 0; i < years.length; i++) {
-		data[years[i]] = income[i];
+		data.push({ year: years[i], data: income[i] });
 	}
 
 	return data;
@@ -39,22 +39,15 @@ async function getIncome(page: Page, link: string) {
 	);
 
 	await page.goto(yearlyLink, { waitUntil: 'domcontentloaded' });
-
-	// Get data of first 5 years.
 	const data1 = await get5YearData(page);
-
 	const yearlyLink2 = await page.$eval('ul.pagination li:last-child a', el => (el as HTMLAnchorElement).href);
 
+	// If there is some issue with the new link, stop here and return the data scrapped so far.
 	if (!yearlyLink2 || !yearlyLink2.startsWith('https://')) return data1;
 
 	await page.goto(yearlyLink2, { waitUntil: 'domcontentloaded' });
-
-	// Get data of next 5 years.
 	const data2 = await get5YearData(page);
-
-	// Merge both into one object.
-	const data = { ...data1, ...data2 };
-	return data;
+	return [...data1, ...data2];
 }
 
 export default getIncome;
