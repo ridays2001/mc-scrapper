@@ -1,5 +1,5 @@
 import bluebird from 'bluebird';
-import { writeFile } from 'fs/promises';
+import { readFile, writeFile } from 'fs/promises';
 
 import getIncome from './getIncome';
 import getROCE from './getROCE';
@@ -17,16 +17,17 @@ interface StockDetails {
 const time = (old: number) => `${Math.round((Date.now() - old) / 1000)}s`;
 
 // Set the type of stocks you want to fetch.
-const type = 'SML-50' as StockType;
+const type = 'NIFTY-500' as StockType;
 
-(async function () {
+// TODO: read the JSON file and edit its contents rather than writing completely new.
+async function main() {
 	const details = await withBrowser(async browser => {
 		const stocks = await withPage(browser)(page => getStocks(page, type));
 		const start = Date.now();
 		let i = 1;
 		return bluebird.map(
 			stocks,
-			(stock, _j, length) => {
+			(stock, _, length) => {
 				return withPage(browser)(async page => {
 					const t1 = Date.now();
 					const roce = await getROCE(page, stock.link);
@@ -47,4 +48,19 @@ const type = 'SML-50' as StockType;
 
 	// Write the details into a JSON file.
 	await writeFile(`details-${type}.json`, JSON.stringify(details, undefined, 4));
-})();
+}
+
+async function convert() {
+	const converted = [];
+	const json = JSON.parse(await readFile(`details-${type}.json`, 'utf-8'));
+	for (const company of json) {
+		const data = {} as Record<string, any>;
+		data.name = company.name;
+		data.price = company.price;
+		for (const r of company.roce) data[`roce-${r.year}`] = r.data;
+		for (const i of company.income) data[`income-${i.year}`] = i.data;
+		converted.push(data);
+	}
+	await writeFile(`details-converted-${type}.json`, JSON.stringify(converted, undefined, 4));
+}
+convert();

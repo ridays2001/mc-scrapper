@@ -32,22 +32,27 @@ async function get5YearData(page: Page) {
 }
 
 async function getIncome(page: Page, link: string) {
-	await page.goto(link, { waitUntil: 'domcontentloaded' });
-	const yearlyLink = await page.$eval(
-		'#consolidated li a[title="Yearly Results"]',
-		el => (el as HTMLAnchorElement).href
-	);
+	try {
+		await page.goto(link, { waitUntil: 'domcontentloaded' });
+		const yearlyLink = await page.$eval(
+			'#consolidated li a[title="Yearly Results"]',
+			el => (el as HTMLAnchorElement).href
+		);
 
-	await page.goto(yearlyLink, { waitUntil: 'domcontentloaded' });
-	const data1 = await get5YearData(page);
-	const yearlyLink2 = await page.$eval('ul.pagination li:last-child a', el => (el as HTMLAnchorElement).href);
+		await page.goto(yearlyLink, { waitUntil: 'domcontentloaded' });
+		const data1 = await get5YearData(page);
+		const yearlyLink2 = await page.$eval('ul.pagination li:last-child a', el => (el as HTMLAnchorElement).href);
 
-	// If there is some issue with the new link, stop here and return the data scrapped so far.
-	if (!yearlyLink2 || !yearlyLink2.startsWith('https://')) return data1;
+		// If there is some issue with the new link, stop here and return the data scrapped so far.
+		if (!yearlyLink2 || !yearlyLink2.startsWith('https://')) return data1;
 
-	await page.goto(yearlyLink2, { waitUntil: 'domcontentloaded' });
-	const data2 = await get5YearData(page);
-	return [...data1, ...data2];
+		await page.goto(yearlyLink2, { waitUntil: 'domcontentloaded' });
+		const data2 = await get5YearData(page);
+		return [...data1, ...data2];
+	} catch (err) {
+		console.log(err, link);
+		return [];
+	}
 }
 
 export default getIncome;

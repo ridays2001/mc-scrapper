@@ -32,19 +32,24 @@ async function get5YearData(page: Page) {
 }
 
 async function getROCE(page: Page, link: string) {
-	await page.goto(link, { waitUntil: 'domcontentloaded' });
-	const ratiosLink = await page.$eval('#consolidated li a[title="Ratios"]', el => (el as HTMLAnchorElement).href);
+	try {
+		await page.goto(link, { waitUntil: 'domcontentloaded' });
+		const ratiosLink = await page.$eval('#consolidated li a[title="Ratios"]', el => (el as HTMLAnchorElement).href);
 
-	await page.goto(ratiosLink, { waitUntil: 'domcontentloaded' });
-	const data1 = await get5YearData(page);
-	const ratiosLink2 = await page.$eval('ul.pagination li:last-child a', el => (el as HTMLAnchorElement).href);
+		await page.goto(ratiosLink, { waitUntil: 'domcontentloaded' });
+		const data1 = await get5YearData(page);
+		const ratiosLink2 = await page.$eval('ul.pagination li:last-child a', el => (el as HTMLAnchorElement).href);
 
-	// If there is some issue with the new link, stop here and return the data scrapped so far.
-	if (!ratiosLink2 || !ratiosLink2.startsWith('https://')) return data1;
+		// If there is some issue with the new link, stop here and return the data scrapped so far.
+		if (!ratiosLink2 || !ratiosLink2.startsWith('https://')) return data1;
 
-	await page.goto(ratiosLink2, { waitUntil: 'domcontentloaded' });
-	const data2 = await get5YearData(page);
-	return [...data1, ...data2];
+		await page.goto(ratiosLink2, { waitUntil: 'domcontentloaded' });
+		const data2 = await get5YearData(page);
+		return [...data1, ...data2];
+	} catch (err) {
+		console.log(err, link);
+		return [];
+	}
 }
 
 export default getROCE;
